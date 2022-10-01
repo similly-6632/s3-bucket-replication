@@ -73,6 +73,7 @@ resource "aws_iam_role_policy_attachment" "replication" {
 resource "aws_s3_bucket" "west1" {
   provider = aws.west1
   bucket   = "srmtest-destination"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "west1" {
@@ -102,6 +103,7 @@ resource "aws_s3_bucket_versioning" "west1" {
 resource "aws_s3_bucket" "west2" {
   provider = aws.west2
   bucket   = "srmtest-source"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "west2" {
