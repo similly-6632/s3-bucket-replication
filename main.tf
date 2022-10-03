@@ -32,7 +32,7 @@ resource "aws_iam_policy" "replication" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${aws_s3_bucket.west2.arn}",
+        "${var.source_bucket_arn}",
         "${aws_s3_bucket.west1.arn}"
       ]
     },
@@ -44,7 +44,7 @@ resource "aws_iam_policy" "replication" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${aws_s3_bucket.west2.arn}/*",
+        "${var.source_bucket_arn}/*",
         "${aws_s3_bucket.west1.arn}/*"
       ]
     },
@@ -56,7 +56,7 @@ resource "aws_iam_policy" "replication" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "${aws_s3_bucket.west2.arn}/*",
+        "${var.source_bucket_arn}/*",
         "${aws_s3_bucket.west1.arn}/*"
       ]
     }
@@ -71,8 +71,8 @@ resource "aws_iam_role_policy_attachment" "replication" {
 }
 
 resource "aws_s3_bucket" "west1" {
-  provider = aws.west1
-  bucket   = "srmtest-destination"
+  provider      = aws.west1
+  bucket        = "srmtest-destination"
   force_destroy = true
 }
 
@@ -85,11 +85,13 @@ resource "aws_s3_bucket_public_access_block" "west1" {
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_acl" "west1_bucket_acl" {
+resource "aws_s3_bucket_ownership_controls" "west1_bucket_ownership" {
   provider = aws.west1
+  bucket   = aws_s3_bucket.west1.id
 
-  bucket = aws_s3_bucket.west1.id
-  acl    = "private"
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "west1" {
@@ -100,32 +102,36 @@ resource "aws_s3_bucket_versioning" "west1" {
   }
 }
 
+/*
 resource "aws_s3_bucket" "west2" {
   provider = aws.west2
   bucket   = "srmtest-source"
   force_destroy = true
 }
+*/
 
 resource "aws_s3_bucket_public_access_block" "west2" {
   provider                = aws.west2
-  bucket                  = aws_s3_bucket.west2.id
+  bucket                  = var.source_bucket_id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_acl" "source_bucket_acl" {
+resource "aws_s3_bucket_ownership_controls" "west2_bucket_ownership" {
   provider = aws.west2
+  bucket   = var.source_bucket_id
 
-  bucket = aws_s3_bucket.west2.id
-  acl    = "private"
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "west2" {
   provider = aws.west2
 
-  bucket = aws_s3_bucket.west2.id
+  bucket = var.source_bucket_id
   versioning_configuration {
     status = "Enabled"
   }
@@ -134,18 +140,18 @@ resource "aws_s3_bucket_versioning" "west2" {
 resource "aws_s3_bucket_replication_configuration" "west2_to_west1" {
   provider = aws.west2
   # Must have bucket versioning enabled first
-  depends_on = [aws_s3_bucket_versioning.west2]
+  # depends_on = [aws_s3_bucket_versioning.west2]
 
   role   = aws_iam_role.replication.arn
-  bucket = aws_s3_bucket.west2.id
+  bucket = var.source_bucket_id
 
   rule {
     id     = "CRR_west2_west1"
     status = "Enabled"
 
     destination {
-      bucket        = aws_s3_bucket.west1.arn
-      
+      bucket = aws_s3_bucket.west1.arn
+
     }
   }
 }
@@ -163,8 +169,8 @@ resource "aws_s3_bucket_replication_configuration" "west1_to_west2" {
     status = "Enabled"
 
     destination {
-      bucket        = aws_s3_bucket.west2.arn
-      
+      bucket = var.source_bucket_arn
+
     }
   }
 }
