@@ -71,8 +71,8 @@ resource "aws_iam_role_policy_attachment" "replication" {
 }
 
 resource "aws_s3_bucket" "west1" {
-  provider = aws.west1
-  bucket   = "srmtest-destination"
+  provider      = aws.west1
+  bucket        = "srmtest-destination"
   force_destroy = true
 }
 
@@ -101,8 +101,8 @@ resource "aws_s3_bucket_versioning" "west1" {
 }
 
 resource "aws_s3_bucket" "west2" {
-  provider = aws.west2
-  bucket   = "srmtest-source"
+  provider      = aws.west2
+  bucket        = "srmtest-source"
   force_destroy = true
 }
 
@@ -144,8 +144,8 @@ resource "aws_s3_bucket_replication_configuration" "west2_to_west1" {
     status = "Enabled"
 
     destination {
-      bucket        = aws_s3_bucket.west1.arn
-      
+      bucket = aws_s3_bucket.west1.arn
+
     }
   }
 }
@@ -163,8 +163,8 @@ resource "aws_s3_bucket_replication_configuration" "west1_to_west2" {
     status = "Enabled"
 
     destination {
-      bucket        = aws_s3_bucket.west2.arn
-      
+      bucket = aws_s3_bucket.west2.arn
+
     }
   }
 }
